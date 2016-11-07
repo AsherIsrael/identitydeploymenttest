@@ -1,0 +1,18 @@
+@model TheWall.Models.TestUser
+
+@{
+    ViewBag.Title = "Show";
+}
+
+<h2>Welcome, @Model.UserName!</h2>
+@{
+    foreach(var message in Model.Messages)
+    {
+        <p>@message.MessageText</p>
+        foreach(var comment in message.Comments)
+        {
+            <p>\t @comment.CommentText</p>
+        }
+
+    }
+}

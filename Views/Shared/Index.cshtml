@@ -1,0 +1,26 @@
+
+@model IEnumerable<TheWall.Models.Message>
+
+<h1>messages</h1>
+<div asp-validation-summary="All" class="danger"></div>
+@Html.Partial("MessagePartial", (Message)@ViewBag.Message)
+@{
+    foreach(var message in Model)
+    {
+        ((Comment)@ViewBag.Comment).MessageId = message.MessageId;        
+        <div class="message">
+            <p>@message.MessageText</p>
+            <p class="name">Posted by @message.TestUser.UserName</p>
+        </div>
+        foreach( var comment in message.Comments)
+        {
+            <div class="comment">
+                <p>@comment.CommentText</p>
+                <p class="name">Commented by @comment.TestUser.UserName</p>
+            </div>   
+        }
+        <div class="comment">
+            @Html.Partial("CommentPartial", (Comment)@ViewBag.Comment)
+        </div>  
+    }
+}

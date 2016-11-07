@@ -1,0 +1,29 @@
+/**{
+    border: 1px dotted red;
+    margin: 0;
+    padding: 0;
+}*/
+
+.message{
+    margin-left: 5%;
+}
+
+.name{
+    margin-left: 2%;
+    margin-bottom: 1%;
+}
+
+.comment{
+    margin-left: 10%;
+}
+
+.formElement{
+    display: block;
+    margin-bottom: 10px;
+    margin-left: 30px;
+}
+
+.blockForm{
+    display: inline-block;
+
+}

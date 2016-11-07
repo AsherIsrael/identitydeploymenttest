@@ -1,0 +1,15 @@
+@model TheWall.Models.LoginViewModel
+
+@{
+    ViewBag.Title = "Login";
+}
+
+@{
+    <p>@ViewData["Error"]</p>
+}
+<form class="blockForm" asp-controller="Users" asp-action="Login" method="post">
+    <div asp-validation-summary="All"></div>
+    Email: <input class="formElement" asp-for="Email"/>
+    Password: <input class="formElement" asp-for="Password"/>
+    <button type="submit">Login</button>
+</form>

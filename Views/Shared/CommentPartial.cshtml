@@ -1,0 +1,9 @@
+@model TheWall.Models.Comment
+
+<form asp-controller="Comments" asp-action="CreateComment" method="post">
+    <input type="hidden" asp-for="MessageId" value=@Model.MessageId/>
+    <div asp-validation-for="Comment" class="danger"></div>
+    <label asp-for="CommentText"></label>
+    <textarea asp-for="CommentText"></textarea>
+    <button type="submit">Post Comment</button>
+</form>

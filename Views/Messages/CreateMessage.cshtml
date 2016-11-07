@@ -1,0 +1,8 @@
+@model TheWall.Models.Message
+
+<h1>hi there</h1>
+<form asp-controller="Messages" asp-action="CreateMessage" method="post">
+    <label asp-for="MessageText"></label>
+    <input asp-for="MessageText"/>
+    <button type="submit">yo</button>
+</form>

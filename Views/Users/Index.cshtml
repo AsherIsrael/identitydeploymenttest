@@ -1,0 +1,12 @@
+@model IEnumerable<TheWall.Models.TestUser>
+
+@{
+    foreach(var user in Model)
+    {
+        <p>@user.FirstName</p>
+        foreach(var cart in user.ShoppingCarts)
+        {
+            <p>@cart.Product.Name</p>
+        }
+    }
+}

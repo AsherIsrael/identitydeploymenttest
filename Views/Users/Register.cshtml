@@ -1,0 +1,15 @@
+@model TheWall.Models.Register
+
+@{
+  ViewBag.Title = "Register";
+}
+<form class="blockForm" asp-controller="Users" asp-action="Register" method="post" role="form">
+    <div asp-validation-summary="All"></div>
+    First Name: <input class="formElement" asp-for="FirstName"/>
+    Last Name: <input class="formElement" asp-for="LastName"/>
+    Email: <input class="formElement" asp-for="Email"/>
+    Password: <input class="formElement" asp-for="Password" type="password"/>
+    Confirm Password: <input class="formElement" asp-for="ConfirmPassword" type="password"/>
+    <button type="submit">Register</button>
+</form>
+<a class="formElement" asp-controller="Users" asp-action="Login"><button>Login</button></a>
