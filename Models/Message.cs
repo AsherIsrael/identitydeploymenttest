@@ -8,6 +8,7 @@ namespace TheWall.Models
 {
     public class Message
     {
+        [Key]
         public int MessageId { get; set; }
 
         [Required]
@@ -27,6 +28,8 @@ namespace TheWall.Models
         public Message()
         {
             Comments = new List<Comment>();
+            CreatedAt = DateTime.Now;
+            UpdatedAt = DateTime.Now;
         }
     }
 }

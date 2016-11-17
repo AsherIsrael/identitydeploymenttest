@@ -5,6 +5,7 @@ namespace TheWall.Models
 {
     public class Comment
     {
+        [Key]
         public int CommentId { get; set; }
 
         [Required]
@@ -20,5 +21,11 @@ namespace TheWall.Models
         public string TestUserId { get; set; }
 
         public TestUser TestUser { get; set; }
+
+        public Comment()
+        {
+            CreatedAt = DateTime.Now;
+            UpdatedAt = DateTime.Now;
+        }
     }
 }

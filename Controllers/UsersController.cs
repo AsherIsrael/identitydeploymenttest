@@ -4,11 +4,15 @@ using TheWall.Models;
 using System.Linq;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-// using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using System;
+using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace TheWall.Controllers
 {
+    [Authorize]
     public class UsersController : Controller
     {
         private TestContext _context;
@@ -32,9 +36,9 @@ namespace TheWall.Controllers
 
         [HttpGet]
         [Route("index")]
-        public IActionResult Index()
+        public IActionResult Index(string returnUrl = "")
         {
-            var thisthing = _context.users
+            List<TestUser> thisthing = _context.users
                 .Include(user => user.Shoppingcarts)
                     .ThenInclude(shop => shop.Product)
                 .ToList();
@@ -43,44 +47,42 @@ namespace TheWall.Controllers
                 .ThenInclude(shop => shop.Product).ToList());
         }
 
+        [HttpGet]
+        [Route("edit")]
+        public async Task<IActionResult> Update()
+        {
+            Console.WriteLine("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+            TestUser thingy = await GetCurrentUserAsync();
+            thingy.UserName = "Lili";
+            thingy.Email = "Lili@WRock.edu";
+            // await _userManager.SetUserNameAsync(thingy, "Lili");
+            _context.SaveChanges();
+            thingy = await GetCurrentUserAsync();
+            Console.WriteLine(thingy.UserName);
+            // await _userManager.UpdateAsync(thingy);
+            return RedirectToAction("Index");
+        }
+
 
         [HttpGet]
         [Route("")]
+        [AllowAnonymous]
         public IActionResult Register()
         {
+            ViewData["returnUrl"] = "";
             return View();
         }
 
         [HttpPost]
         [Route("register")]
+        [AllowAnonymous]
         public async Task<IActionResult> Register(Register user)
         {
-            // if(ModelState.IsValid)
-            // {
-            //     TestUser newUser = new TestUser
-            //     {
-            //         FirstName = user.FirstName, 
-            //         LastName = user.LastName, 
-            //         Email = user.Email,
-            //         CreatedAt = DateTime.Now, 
-            //         UpdatedAt = DateTime.Now
-            //     };
-
-            //     PasswordHasher<TestUser> hasher = new PasswordHasher<TestUser>();
-            //     newUser.Password = hasher.HashPassword(newUser, user.Password);
-
-            //     _context.users.Add(newUser);
-            //     Console.WriteLine(_context.SaveChanges());
-            //     int newUserId = _context.users.Max(u => u.TestUserId);
-            //     HttpContext.Session.SetInt32("currentUser", newUserId);
-            //     return RedirectToAction("Show");
-            // }
-            // return View(user);
 
             if(ModelState.IsValid)
             {
                 // var User = new TestUser {UserName = user.FirstName, FirstName = user.FirstName, LastName = user.LastName, Email = user.Email };
-                TestUser User = new TestUser {UserName = user.FirstName, Email = user.Email };
+                TestUser User = new TestUser {UserName = user.FirstName, Email = user.Email, CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now };
                 IdentityResult result = await _userManager.CreateAsync(User, user.Password);
                 if(result.Succeeded)
                 {
@@ -99,32 +101,13 @@ namespace TheWall.Controllers
 
         [HttpPost]
         [Route("login")]
-        // [AllowAnonymous]
+        [AllowAnonymous]
         public async Task<IActionResult> Login(LoginViewModel login)
         {
-
-            // TestUser checkUser = _context.users.Where(u => u.Email == Email).SingleOrDefault();
-            // Console.WriteLine((checkUser == null));
-            // Console.WriteLine("after this");
-            // if(checkUser != null && Password != null)
-            // {
-            
-            //     PasswordHasher<TestUser> hasher = new PasswordHasher<TestUser>();
-
-            //     if(0 != hasher.VerifyHashedPassword(checkUser, checkUser.Password, Password))
-            //     {
-            //         HttpContext.Session.SetInt32("currentUser", checkUser.TestUserId);
-            //         return RedirectToAction("Show");
-            //     }
-                
-            // }
-            // ViewData["Error"] = "Email or Password was incorrect";
-            // return View();
-
             if(ModelState.IsValid)
             {
                 var User = await _userManager.FindByEmailAsync(login.Email);
-                var something = await _signInManager.
+                // var something = await _signInManager.
                 var result = await _signInManager.PasswordSignInAsync(User.UserName, login.Password, isPersistent: false, lockoutOnFailure: false);
                 if(result.Succeeded)
                 {
@@ -138,8 +121,21 @@ namespace TheWall.Controllers
             return View(login);
         }
 
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        [Route("ExternalLogin")]
+        public IActionResult ExternalLogin(string provider)
+        {
+            // Request a redirect to the external login provider.
+            var redirectUrl = Url.Action("ShowThirdParty", "Users");
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+            return Challenge(properties, provider);
+        }
+
         [HttpGet]
         [Route("login")]
+        [AllowAnonymous]
         public IActionResult Login()
         {
             ViewData["Error"] = "";
@@ -148,8 +144,9 @@ namespace TheWall.Controllers
 
         [HttpGet]
         [Route("user")]
-        public async Task<IActionResult> Show()
+        public async Task<IActionResult> Show(string returnUrl = "")
         {
+            Console.WriteLine("YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY");
             var User = await GetCurrentUserAsync();
             return View( _context.users
                 .Include(user => user.Messages)
@@ -158,6 +155,13 @@ namespace TheWall.Controllers
             );
                 //   .Include(user => user.Messages)
                 //                 .ThenInclude(message => message.Comments)
+        }
+
+        [HttpGet]
+        [Route("ThirdParty")]
+        public IActionResult ShowThirdParty(string returnUrl = "")
+        {
+            return View();
         }
 
         [HttpGet]
@@ -177,7 +181,7 @@ namespace TheWall.Controllers
             return View(result.Succeeded ? "ConfirmEmail" : "Error");
         }
 
-        // #region Helpers
+        #region Helpers
 
         private void AddErrors(IdentityResult result)
         {
@@ -192,6 +196,6 @@ namespace TheWall.Controllers
             return _userManager.GetUserAsync(HttpContext.User);
         }
 
-        // #endregion
+        #endregion
     }
 }

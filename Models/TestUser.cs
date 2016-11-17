@@ -38,6 +38,8 @@ namespace TheWall.Models
             Messages = new List<Message>();
             Comments = new List<Comment>();
             Shoppingcarts = new List<Shoppingcart>();
+            CreatedAt = DateTime.Now;
+            UpdatedAt = DateTime.Now;
         }
     }
 }
