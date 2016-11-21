@@ -48,19 +48,12 @@ namespace TheWall.Controllers
         }
 
         [HttpGet]
-        [Route("edit")]
-        public async Task<IActionResult> Update()
+        [Route("update")]
+        public async Task<IActionResult> Update(string returnUrl = "")
         {
-            Console.WriteLine("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
             TestUser thingy = await GetCurrentUserAsync();
-            thingy.UserName = "Lili";
-            thingy.Email = "Lili@WRock.edu";
-            // await _userManager.SetUserNameAsync(thingy, "Lili");
-            _context.SaveChanges();
-            thingy = await GetCurrentUserAsync();
-            Console.WriteLine(thingy.UserName);
-            // await _userManager.UpdateAsync(thingy);
-            return RedirectToAction("Index");
+            await _userManager.UpdateAsync(thingy);
+            return RedirectToAction("Show");
         }
 
 
@@ -69,6 +62,7 @@ namespace TheWall.Controllers
         [AllowAnonymous]
         public IActionResult Register()
         {
+            _signInManager.SignOutAsync();
             ViewData["returnUrl"] = "";
             return View();
         }
@@ -107,12 +101,14 @@ namespace TheWall.Controllers
             if(ModelState.IsValid)
             {
                 var User = await _userManager.FindByEmailAsync(login.Email);
+
                 // var something = await _signInManager.
                 var result = await _signInManager.PasswordSignInAsync(User.UserName, login.Password, isPersistent: false, lockoutOnFailure: false);
                 if(result.Succeeded)
                 {
-                    var loggedInUser = await GetCurrentUserAsync();
-                    var thing = loggedInUser.Id;
+                    TestUser loggedInUser = await GetCurrentUserAsync();
+                    string thing = loggedInUser.Id;
+                    Console.WriteLine(thing);
                     return RedirectToAction("Show");
                 }
 
@@ -127,10 +123,34 @@ namespace TheWall.Controllers
         [Route("ExternalLogin")]
         public IActionResult ExternalLogin(string provider)
         {
+            Console.WriteLine("YYYYYYYYYYYYYYYYYYYYYY");
             // Request a redirect to the external login provider.
-            var redirectUrl = Url.Action("ShowThirdParty", "Users");
+            var redirectUrl = Url.Action("ExternalLoginCallback", "Users");
             var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
             return Challenge(properties, provider);
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> ExternalLoginCallback(string remoteError = null)
+        {
+            if (remoteError != null)
+            {
+                ModelState.AddModelError(string.Empty, $"Error from external provider: {remoteError}");
+                return View("Login");
+            }
+            var Info = await _signInManager.GetExternalLoginInfoAsync();
+            if( Info == null )
+            {
+                return RedirectToAction("Login");
+            }
+            var result = await _signInManager.ExternalLoginSignInAsync(Info.LoginProvider, Info.ProviderKey, isPersistent: false);
+            if( result.Succeeded )
+            {
+                await _signInManager.UpdateExternalAuthenticationTokensAsync(Info);
+                return RedirectToAction("ShowThirdParty");
+            }
+            return RedirectToAction("Login");
         }
 
         [HttpGet]
@@ -146,7 +166,6 @@ namespace TheWall.Controllers
         [Route("user")]
         public async Task<IActionResult> Show(string returnUrl = "")
         {
-            Console.WriteLine("YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY");
             var User = await GetCurrentUserAsync();
             return View( _context.users
                 .Include(user => user.Messages)
@@ -159,8 +178,12 @@ namespace TheWall.Controllers
 
         [HttpGet]
         [Route("ThirdParty")]
-        public IActionResult ShowThirdParty(string returnUrl = "")
+        public async Task<IActionResult> ShowThirdParty(string returnUrl = "")
         {
+            Console.WriteLine("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+            TestUser User = await GetCurrentUserAsync();
+            Console.WriteLine(User.UserName);
+            Console.WriteLine("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
             return View();
         }
 

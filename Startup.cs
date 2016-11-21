@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Mvc;
 
 
 // // using MySQL.Data.EntityFrameworkCore.Extensions;
@@ -62,7 +63,10 @@ namespace TheWall
                 .AddEntityFrameworkStores<TestContext>()
                 .AddDefaultTokenProviders();
 
-            services.AddMvc();
+            services.AddMvc( options =>
+            {
+                // options.Filters.Add( new RequireHttpsAttribute ());
+            });
             
             // services.AddTransient<IEmailSender, AuthMessageSender>();
         }
@@ -75,7 +79,7 @@ namespace TheWall
             app.UseSession();
             app.UseStaticFiles();
             app.UseDeveloperExceptionPage();
-            // app.UseDatabaseErrorPage();
+            app.UseDatabaseErrorPage();
 
             app.UseIdentity();
 
