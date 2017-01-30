@@ -12,6 +12,14 @@ using System.Collections.Generic;
 
 namespace TheWall.Controllers
 {
+    // public static class TestIt
+    // {
+    //     public static void DoesThisWork(this TestUser user)
+    //     {
+    //         Console.WriteLine("stuff");
+    //     }
+    // }
+
     [Authorize]
     public class UsersController : Controller
     {
@@ -38,6 +46,7 @@ namespace TheWall.Controllers
         [Route("index")]
         public IActionResult Index(string returnUrl = "")
         {
+
             List<TestUser> thisthing = _context.users
                 .Include(user => user.Shoppingcarts)
                     .ThenInclude(shop => shop.Product)
@@ -75,16 +84,14 @@ namespace TheWall.Controllers
 
             if(ModelState.IsValid)
             {
-                // var User = new TestUser {UserName = user.FirstName, FirstName = user.FirstName, LastName = user.LastName, Email = user.Email };
                 TestUser User = new TestUser {UserName = user.FirstName, Email = user.Email, CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now };
-                IdentityResult result = await _userManager.CreateAsync(User, user.Password);
-                if(result.Succeeded)
+                TestUser User2 = new TestUser {UserName = "Dylan", Email = user.Email, CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now };
+                Task<IdentityResult> Async1 = _userManager.CreateAsync(User, user.Password);
+                Task<IdentityResult> Async2 = _userManager.CreateAsync(User2, user.Password);
+                IdentityResult result = await Async1;
+                IdentityResult result2 = await Async2;
+                if(result.Succeeded && result2.Succeeded)
                 {
-
-                    // var code = await _userManager.GenerateEmailConfirmationTokenAsync(User);
-                    // var callbackUrl = Url.Action("ConfirmEmail", "Users", new { userId = User.Id, code = code }, protocol: HttpContext.Request.Scheme);
-                    // await _emailSender.SendEmailAsync(user.Email, "Confirm your account",
-                    //    "Please confirm your account by clicking this link: <a href=\"" + callbackUrl + "\">link</a>");
                     await _signInManager.SignInAsync(User, isPersistent: false);
                     return RedirectToAction("Show");
                 }
@@ -100,15 +107,13 @@ namespace TheWall.Controllers
         {
             if(ModelState.IsValid)
             {
-                var User = await _userManager.FindByEmailAsync(login.Email);
-
-                // var something = await _signInManager.
+                TestUser User = await _userManager.FindByEmailAsync(login.Email);
                 var result = await _signInManager.PasswordSignInAsync(User.UserName, login.Password, isPersistent: false, lockoutOnFailure: false);
                 if(result.Succeeded)
                 {
                     TestUser loggedInUser = await GetCurrentUserAsync();
-                    string thing = loggedInUser.Id;
-                    Console.WriteLine(thing);
+                    // string thing = loggedInUser.Id;
+                    // Console.WriteLine(thing);
                     return RedirectToAction("Show");
                 }
 
@@ -123,15 +128,15 @@ namespace TheWall.Controllers
         [Route("ExternalLogin")]
         public IActionResult ExternalLogin(string provider)
         {
-            Console.WriteLine("YYYYYYYYYYYYYYYYYYYYYY");
             // Request a redirect to the external login provider.
-            var redirectUrl = Url.Action("ExternalLoginCallback", "Users");
+            string redirectUrl = Url.Action("ExternalLoginCallback", "Users");
             var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
             return Challenge(properties, provider);
         }
 
         [HttpGet]
         [AllowAnonymous]
+        [Route("ExternalLoginCallback")]
         public async Task<IActionResult> ExternalLoginCallback(string remoteError = null)
         {
             if (remoteError != null)
@@ -139,7 +144,7 @@ namespace TheWall.Controllers
                 ModelState.AddModelError(string.Empty, $"Error from external provider: {remoteError}");
                 return View("Login");
             }
-            var Info = await _signInManager.GetExternalLoginInfoAsync();
+            ExternalLoginInfo Info = await _signInManager.GetExternalLoginInfoAsync();
             if( Info == null )
             {
                 return RedirectToAction("Login");
@@ -148,9 +153,40 @@ namespace TheWall.Controllers
             if( result.Succeeded )
             {
                 await _signInManager.UpdateExternalAuthenticationTokensAsync(Info);
-                return RedirectToAction("ShowThirdParty");
+                return RedirectToAction("Show");
             }
-            return RedirectToAction("Login");
+            ViewBag.LoginProvider = Info.LoginProvider;
+            return View("ThirdPartyConfirmation");
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        [Route("ExternalConfirmation")]
+        public async Task<IActionResult> ExternalConfirmation(ExternalConfirmationViewModel model)
+        {
+            if( ModelState.IsValid )
+            {
+                ExternalLoginInfo Info = await _signInManager.GetExternalLoginInfoAsync();
+                if ( Info == null )
+                {
+                    return RedirectToAction("Login");
+                }
+                var User = new TestUser{ UserName = model.UserName};
+                IdentityResult Result = await _userManager.CreateAsync(User);
+                if ( Result.Succeeded )
+                {
+                    Result = await _userManager.AddLoginAsync(User, Info);
+                    if( Result.Succeeded )
+                    {
+                        await _signInManager.SignInAsync(User, isPersistent: false);
+                        await _signInManager.UpdateExternalAuthenticationTokensAsync(Info);
+
+                        return RedirectToAction("Show");
+                    }
+                }
+            }
+            return View("ThirdPartyConfirmation");
         }
 
         [HttpGet]
@@ -166,11 +202,11 @@ namespace TheWall.Controllers
         [Route("user")]
         public async Task<IActionResult> Show(string returnUrl = "")
         {
-            var User = await GetCurrentUserAsync();
+            TestUser User = await GetCurrentUserAsync();
             return View( _context.users
-                .Include(user => user.Messages)
-                    .ThenInclude(message => message.Comments)
-                .SingleOrDefault(u => u.Id == User.Id)
+                            .Include(user => user.Messages)
+                                .ThenInclude(message => message.Comments)
+                            .SingleOrDefault(u => u.Id == User.Id)
             );
                 //   .Include(user => user.Messages)
                 //                 .ThenInclude(message => message.Comments)
@@ -180,10 +216,8 @@ namespace TheWall.Controllers
         [Route("ThirdParty")]
         public async Task<IActionResult> ShowThirdParty(string returnUrl = "")
         {
-            Console.WriteLine("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
             TestUser User = await GetCurrentUserAsync();
             Console.WriteLine(User.UserName);
-            Console.WriteLine("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
             return View();
         }
 
@@ -195,12 +229,12 @@ namespace TheWall.Controllers
             {
                 return View("Error");
             }
-            var user = await _userManager.FindByIdAsync(userId);
+            TestUser user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
                 return View("Error");
             }
-            var result = await _userManager.ConfirmEmailAsync(user, code);
+            IdentityResult result = await _userManager.ConfirmEmailAsync(user, code);
             return View(result.Succeeded ? "ConfirmEmail" : "Error");
         }
 

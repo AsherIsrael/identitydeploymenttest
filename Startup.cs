@@ -7,13 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Mvc;
-
-
-// // using MySQL.Data.EntityFrameworkCore.Extensions;
-// using Microsoft.Extensions.Configuration;
-// using Microsoft.AspNetCore.Hosting;
-// using TheWall.Services;
-// using System.IO;
+using System;
 
 namespace TheWall
 {
@@ -36,8 +30,11 @@ namespace TheWall
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true);
-
-            builder.AddUserSecrets();
+            
+            if( env.IsDevelopment())
+            {
+                builder.AddUserSecrets();
+            }
 
             builder.AddEnvironmentVariables();
             Configuration = builder.Build();
@@ -71,7 +68,7 @@ namespace TheWall
             // services.AddTransient<IEmailSender, AuthMessageSender>();
         }
 
-        public void Configure(IApplicationBuilder app, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, ILoggerFactory loggerFactory, IHostingEnvironment env)
         {
             loggerFactory.AddConsole();
             // loggerFactory.AddDebug();

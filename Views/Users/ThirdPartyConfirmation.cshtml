@@ -1,0 +1,10 @@
+@model ExternalConfirmationViewModel
+
+<div>
+    <div asp-validation-summary="All"></div>
+    <form asp-controller="Users" asp-action="ExternalConfirmation" method="POST">
+        <label asp-for="UserName"></label>
+        <input asp-for="UserName"/>
+        <button type="submit">Submit</button>
+    </form>
+</div>

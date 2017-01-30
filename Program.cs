@@ -16,8 +16,9 @@ namespace TheWall
             IWebHost host = new WebHostBuilder()
                 .UseKestrel()
                 // .UseConfiguration(config)
-                // .UseEnvironment("Development")
-                // .UseUrls("https://localhost:44377", "http://localhost:5000")
+                // .UseEnvironment("Production")
+                .UseEnvironment("Development")
+                // .UseUrls("http://localhost:1234")
                 .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseStartup<Startup>()
                 .Build();
